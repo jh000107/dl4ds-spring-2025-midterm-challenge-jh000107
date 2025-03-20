@@ -4,6 +4,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
+############
+from torch.utils.data import random_split
+############
+
 import os
 import numpy as np
 import pandas as pd
@@ -154,9 +158,9 @@ def main():
                                             download=True, transform=transform_train)
 
     # Split train into train and validation (80/20 split)
-    train_size = ...   ### TODO -- Calculate training set size
-    val_size = ...     ### TODO -- Calculate validation set size
-    trainset, valset = ...  ### TODO -- split into training and validation sets
+    train_size = int(0.8 * len(trainset))   ### TODO -- Calculate training set size
+    val_size = int(0.2 * len(trainset))     ### TODO -- Calculate validation set size
+    trainset, valset =  random_split(trainset, [train_size, val_size]) ### TODO -- split into training and validation sets
 
     ### TODO -- define loaders and test set
     trainloader = ...
