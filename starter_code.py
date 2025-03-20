@@ -4,9 +4,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
-############
-from torch.utils.data import random_split
-############
+############ My imports ############
+from torch.utils.data import random_split, DataLoader
+####################################
 
 import os
 import numpy as np
@@ -148,7 +148,10 @@ def main():
     ###############
 
     # Validation and test transforms (NO augmentation)
-    transform_test = ...   ### TODO -- BEGIN SOLUTION
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), # Example normalization
+    ])   ### TODO -- BEGIN SOLUTION
 
     ############################################################################
     #       Data Loading
@@ -163,12 +166,13 @@ def main():
     trainset, valset =  random_split(trainset, [train_size, val_size]) ### TODO -- split into training and validation sets
 
     ### TODO -- define loaders and test set
-    trainloader = ...
-    valloader = ...
+    trainloader = DataLoader(trainset, batch_size=CONFIG["batch_size"], shuffle=True, num_workers=CONFIG["num_workers"])
+    valloader = DataLoader(valset, batch_size=CONFIG["batch_size"], shuffle=False, num_workers=CONFIG["num_workers"])
 
     # ... (Create validation and test loaders)
-    testset = ...
-    testloader = ...
+    testset = torchvision.datasets.CIFAR100(root='./data', train=False,
+                                            download=True, transform=transform_test)
+    testloader = DataLoader(testset, batch_size=CONFIG["batch_size"], shuffle=False, num_workers=CONFIG["num_workers"])
     
     ############################################################################
     #   Instantiate model and move to target device
