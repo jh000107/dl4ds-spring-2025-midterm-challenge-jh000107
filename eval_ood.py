@@ -36,10 +36,13 @@ def evaluate_ood(model, distortion_name, severity, CONFIG):
     # Normalize after converting to tensor
     normalize = transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761))
     
+    resize = transforms.Resize(224)
+
     predictions = []  # Store predictions
     with torch.no_grad():
         for inputs in tqdm(dataloader, desc=f"Evaluating {distortion_name} (Severity {severity})", leave=False):
            inputs = inputs[0]
+           inputs = resize(inputs) # Resize to 224x224
            inputs = normalize(inputs) # Apply normalization
            inputs = inputs.to(device)
 

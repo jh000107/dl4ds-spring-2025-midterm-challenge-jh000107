@@ -6,8 +6,7 @@ import torchvision
 import torchvision.transforms as transforms
 ############ My imports ############
 from torch.utils.data import random_split, DataLoader
-from torchvision.models import resnet18, ResNet18_Weights
-
+from torchvision.models import resnet18
 ####################################
 
 import os
@@ -25,7 +24,7 @@ import json
 # finetune.
 ################################################################################
 
-best_model_filename = "best_model_part3_resnet18.pth"
+best_model_filename = "best_model_part2_resnet18.pth"
 
 ################################################################################
 # Define a one epoch training function
@@ -120,7 +119,7 @@ def main():
         "batch_size": 8, # run batch size finder to find optimal batch size
         "learning_rate": 0.1,
         "epochs": 5,  # Train for longer in a real scenario
-        "num_workers": 4, # Adjust based on your system
+        "num_workers": 8, # Adjust based on your system
         "device": "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu",
         "data_dir": "./data",  # Make sure this directory exists
         "ood_dir": "./data/ood-test",
@@ -178,7 +177,7 @@ def main():
     ############################################################################
     #   Instantiate model and move to target device
     ############################################################################
-    model = resnet18(weights=ResNet18_Weights.DEFAULT)   # instantiate your model ### TODO
+    model = resnet18(weights=None)   # instantiate your model ### TODO
     model.fc = nn.Linear(model.fc.in_features, 100)
 
     model = model.to(CONFIG["device"])   # move it to target device
@@ -206,37 +205,37 @@ def main():
     # scheduler = ...  # Add a schedulerl   ### TODO -- you can optionally add a LR scheduler
 
 
-    # Initialize wandb
-    wandb.init(project="sp25-ds542-challenge", config=CONFIG)
-    wandb.watch(model)  # watch the model gradients
+    # # Initialize wandb
+    # wandb.init(project="sp25-ds542-challenge", config=CONFIG)
+    # wandb.watch(model)  # watch the model gradients
 
-    ############################################################################
-    # --- Training Loop (Example - Students need to complete) ---
-    ############################################################################
-    best_val_acc = 0.0
+    # ############################################################################
+    # # --- Training Loop (Example - Students need to complete) ---
+    # ############################################################################
+    # best_val_acc = 0.0
 
-    for epoch in range(CONFIG["epochs"]):
-        train_loss, train_acc = train(epoch, model, trainloader, optimizer, criterion, CONFIG)
-        val_loss, val_acc = validate(model, valloader, criterion, CONFIG["device"])
-        # scheduler.step()
+    # for epoch in range(CONFIG["epochs"]):
+    #     train_loss, train_acc = train(epoch, model, trainloader, optimizer, criterion, CONFIG)
+    #     val_loss, val_acc = validate(model, valloader, criterion, CONFIG["device"])
+    #     # scheduler.step()
 
-        # log to WandB
-        wandb.log({
-            "epoch": epoch + 1,
-            "train_loss": train_loss,
-            "train_acc": train_acc,
-            "val_loss": val_loss,
-            "val_acc": val_acc,
-            "lr": optimizer.param_groups[0]["lr"] # Log learning rate
-        })
+    #     # log to WandB
+    #     wandb.log({
+    #         "epoch": epoch + 1,
+    #         "train_loss": train_loss,
+    #         "train_acc": train_acc,
+    #         "val_loss": val_loss,
+    #         "val_acc": val_acc,
+    #         "lr": optimizer.param_groups[0]["lr"] # Log learning rate
+    #     })
 
-        # Save the best model (based on validation accuracy)
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
-            torch.save(model.state_dict(), best_model_filename)
-            wandb.save(best_model_filename) # Save to wandb as well
+    #     # Save the best model (based on validation accuracy)
+    #     if val_acc > best_val_acc:
+    #         best_val_acc = val_acc
+    #         torch.save(model.state_dict(), best_model_filename)
+    #         wandb.save(best_model_filename) # Save to wandb as well
 
-    wandb.finish()
+    # wandb.finish()
 
     ############################################################################
     # Evaluation -- shouldn't have to change the following code

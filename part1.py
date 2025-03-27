@@ -6,8 +6,6 @@ import torchvision
 import torchvision.transforms as transforms
 ############ My imports ############
 from torch.utils.data import random_split, DataLoader
-from torchvision.models import resnet18, ResNet18_Weights
-
 ####################################
 
 import os
@@ -24,8 +22,27 @@ import json
 # for Part 3 you have the option of using a predefined, pretrained network to
 # finetune.
 ################################################################################
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        super(SimpleCNN, self).__init__()
+        # TODO - define the layers of the network you will use
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
 
-best_model_filename = "best_model_part3_resnet18.pth"
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.fc1 = nn.Linear(32 * 8 * 8, 256)
+        self.fc2 = nn.Linear(256, 100)
+        
+    def forward(self, x):
+        # TODO - define the forward pass of the network you will use
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 32 * 8 * 8)  # Flatten the tensor
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+
+        return x
 
 ################################################################################
 # Define a one epoch training function
@@ -137,10 +154,8 @@ def main():
     ############################################################################
 
     transform_train = transforms.Compose([
-        transforms.Resize(224),
-        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2761)),  # CIFAR-100 stats
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), # Example normalization
     ])
 
     ###############
@@ -149,9 +164,8 @@ def main():
 
     # Validation and test transforms (NO augmentation)
     transform_test = transforms.Compose([
-        transforms.Resize(224),
         transforms.ToTensor(),
-        transforms.Normalize((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2761)),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), # Example normalization
     ])   ### TODO -- BEGIN SOLUTION
 
     ############################################################################
@@ -178,9 +192,7 @@ def main():
     ############################################################################
     #   Instantiate model and move to target device
     ############################################################################
-    model = resnet18(weights=ResNet18_Weights.DEFAULT)   # instantiate your model ### TODO
-    model.fc = nn.Linear(model.fc.in_features, 100)
-
+    model = SimpleCNN()   # instantiate your model ### TODO
     model = model.to(CONFIG["device"])   # move it to target device
 
     print("\nModel summary:")
@@ -233,8 +245,8 @@ def main():
         # Save the best model (based on validation accuracy)
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), best_model_filename)
-            wandb.save(best_model_filename) # Save to wandb as well
+            torch.save(model.state_dict(), "best_model.pth")
+            wandb.save("best_model.pth") # Save to wandb as well
 
     wandb.finish()
 
@@ -245,7 +257,7 @@ def main():
     import eval_ood
 
     # --- Evaluation on Clean CIFAR-100 Test Set ---
-    predictions, clean_accuracy = eval_cifar100.evaluate_cifar100_test(model, best_model_filename, testloader, CONFIG["device"])
+    predictions, clean_accuracy = eval_cifar100.evaluate_cifar100_test(model, testloader, CONFIG["device"])
     print(f"Clean CIFAR-100 Test Accuracy: {clean_accuracy:.2f}%")
 
     # --- Evaluation on OOD ---
