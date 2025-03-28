@@ -147,7 +147,18 @@ scheduler = None
 
 ![Alt text](images/part1.png)
 
-#### Leader
+First of all, the model is learning effectively during training. Training loss is steadily decreasing, and validation loss is also decreasing except for the last epoch. The increase at the end suggests early signs of overfitting, but we cannot say that for sure with just 5 epochs, especially given that we are training the model from scratch.
+
+A fixed learning rate is working just fine for this case because this is an early stage of training and the model does not require sensitive touch at this stage.
+
+There is clearly a lot of room for improvement. Since the model was only trained for 5 epochs, the most obvious next step is to increase the number of training epochs to allow the network more time to learn patterns from the data. The relatively low overall accuracy and the slight uptick in validation loss toward the end suggest that the model has not yet converged at all.
+
+#### Leaderboard Public Score
+
+| Model Name  | Description           | Accuracy  |
+|-------------|-----------------------|-----------|
+| SimpleCNN   | Baseline CNN model    | 0.20138   |
+
 
 
 ### Part 2
