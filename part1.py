@@ -22,6 +22,10 @@ import json
 # for Part 3 you have the option of using a predefined, pretrained network to
 # finetune.
 ################################################################################
+
+"""
+A simple CNN model with 2 convolutional layers and 2 fully connected layers with pooling.
+"""
 class SimpleCNN(nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
@@ -133,9 +137,9 @@ def main():
 
 
     CONFIG = {
-        "model": "MyModel",   # Change name when using a different model
+        "model": "CNN_base_model",   # Change name when using a different model
         "batch_size": 8, # run batch size finder to find optimal batch size
-        "learning_rate": 0.1,
+        "learning_rate": 0.001,
         "epochs": 5,  # Train for longer in a real scenario
         "num_workers": 4, # Adjust based on your system
         "device": "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu",
@@ -153,6 +157,7 @@ def main():
     #      Data Transformation (Example - You might want to modify) 
     ############################################################################
 
+    # No augmentation was added to check true baseline performance of CNN model.
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), # Example normalization
@@ -213,8 +218,10 @@ def main():
     ############################################################################
     # Loss Function, Optimizer and optional learning rate scheduler
     ############################################################################
+
+    # Define loss function and optimizer. No scheduler was added to check true baseline performance of CNN model without learning rate scheduling.
     criterion = nn.CrossEntropyLoss()   ### TODO -- define loss criterion
-    optimizer = optim.Adam(model.parameters(), lr=0.001)  ### TODO -- define optimizer
+    optimizer = optim.Adam(model.parameters(), lr=CONFIG['learning_rate'])  ### TODO -- define optimizer
     # scheduler = ...  # Add a schedulerl   ### TODO -- you can optionally add a LR scheduler
 
 

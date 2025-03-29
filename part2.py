@@ -115,10 +115,10 @@ def main():
 
 
     CONFIG = {
-        "model": "MyModel",   # Change name when using a different model
+        "model": "ResNet18",   # Change name when using a different model
         "batch_size": 8, # run batch size finder to find optimal batch size
-        "learning_rate": 0.1,
-        "epochs": 5,  # Train for longer in a real scenario
+        "learning_rate": 0.001,
+        "epochs": 5,  # Keep epochs small for baseline testing. Train longer for part 3 utilizing GPU.
         "num_workers": 8, # Adjust based on your system
         "device": "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu",
         "data_dir": "./data",  # Make sure this directory exists
@@ -135,6 +135,7 @@ def main():
     #      Data Transformation (Example - You might want to modify) 
     ############################################################################
 
+    # Miminum data augmentation.
     transform_train = transforms.Compose([
         transforms.Resize(224),
         transforms.RandomHorizontalFlip(),
@@ -177,7 +178,10 @@ def main():
     ############################################################################
     #   Instantiate model and move to target device
     ############################################################################
+
+    # Lighest ResNet model. However, its variation proved to perform well on CIFAR-100 benchmark.
     model = resnet18(weights=None)   # instantiate your model ### TODO
+    # Simple modification to the last layer to match the number of classes in CIFAR-100.
     model.fc = nn.Linear(model.fc.in_features, 100)
 
     model = model.to(CONFIG["device"])   # move it to target device
@@ -200,42 +204,44 @@ def main():
     ############################################################################
     # Loss Function, Optimizer and optional learning rate scheduler
     ############################################################################
+    
+    # Default to CrossEntropyLoss and Adam optimizer. Goal is to set the base.
     criterion = nn.CrossEntropyLoss()   ### TODO -- define loss criterion
     optimizer = optim.Adam(model.parameters(), lr=0.001)  ### TODO -- define optimizer
     # scheduler = ...  # Add a schedulerl   ### TODO -- you can optionally add a LR scheduler
 
 
-    # # Initialize wandb
-    # wandb.init(project="sp25-ds542-challenge", config=CONFIG)
-    # wandb.watch(model)  # watch the model gradients
+    # Initialize wandb
+    wandb.init(project="sp25-ds542-challenge", config=CONFIG)
+    wandb.watch(model)  # watch the model gradients
 
-    # ############################################################################
-    # # --- Training Loop (Example - Students need to complete) ---
-    # ############################################################################
-    # best_val_acc = 0.0
+    ############################################################################
+    # --- Training Loop (Example - Students need to complete) ---
+    ############################################################################
+    best_val_acc = 0.0
 
-    # for epoch in range(CONFIG["epochs"]):
-    #     train_loss, train_acc = train(epoch, model, trainloader, optimizer, criterion, CONFIG)
-    #     val_loss, val_acc = validate(model, valloader, criterion, CONFIG["device"])
-    #     # scheduler.step()
+    for epoch in range(CONFIG["epochs"]):
+        train_loss, train_acc = train(epoch, model, trainloader, optimizer, criterion, CONFIG)
+        val_loss, val_acc = validate(model, valloader, criterion, CONFIG["device"])
+        # scheduler.step()
 
-    #     # log to WandB
-    #     wandb.log({
-    #         "epoch": epoch + 1,
-    #         "train_loss": train_loss,
-    #         "train_acc": train_acc,
-    #         "val_loss": val_loss,
-    #         "val_acc": val_acc,
-    #         "lr": optimizer.param_groups[0]["lr"] # Log learning rate
-    #     })
+        # log to WandB
+        wandb.log({
+            "epoch": epoch + 1,
+            "train_loss": train_loss,
+            "train_acc": train_acc,
+            "val_loss": val_loss,
+            "val_acc": val_acc,
+            "lr": optimizer.param_groups[0]["lr"] # Log learning rate
+        })
 
-    #     # Save the best model (based on validation accuracy)
-    #     if val_acc > best_val_acc:
-    #         best_val_acc = val_acc
-    #         torch.save(model.state_dict(), best_model_filename)
-    #         wandb.save(best_model_filename) # Save to wandb as well
+        # Save the best model (based on validation accuracy)
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            torch.save(model.state_dict(), best_model_filename)
+            wandb.save(best_model_filename) # Save to wandb as well
 
-    # wandb.finish()
+    wandb.finish()
 
     ############################################################################
     # Evaluation -- shouldn't have to change the following code
